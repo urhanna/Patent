@@ -1,0 +1,28 @@
+package Kipris_Open_API;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import jdk.internal.org.xml.sax.SAXException;
+
+public class PDF_SaveToDB_Main {
+	public static String years[];
+	
+	public static void main(String[] args) throws ParserConfigurationException, SAXException {
+		int startYear = 2019;  // 1년씩
+		String years[] = new String[1];
+		
+		for(int j = 0; j <1; j++) {
+			String tmp_Str = Integer.toString(startYear-j);
+			years[j] = new String(tmp_Str);
+			System.out.println(years[j]);
+		}
+		
+		Thread thr[] = new Thread[1];
+		
+		for (int i = 0; i < years.length; i++) {
+			thr[i] = new Thread(new PDF_SaveToDB(years[i],i));
+			thr[i].start();
+			System.out.println( i+1 + "번 째 스레드 시작");
+		}
+	}
+}
