@@ -1,0 +1,283 @@
+package Kipris_Open_API;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Vector;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import util.DBUtil;
+
+public class SampleCode implements Runnable {
+
+	private String year;
+	public static long totalTime = 0;
+	public static int totalCount = 0;
+	public static int thread_id = 0;
+	public static long c_time = 0;
+	private String PT_cnt="0000000";
+	private String errFile=null;
+	private String errFileName="ErrFile.txt";
+
+	public SampleCode() {}
+
+	public SampleCode(String year, int i) {
+		this.year = year;
+		this.thread_id = i;
+	}
+
+	private static String dbname = "openAPI_han";
+	private static DBUtil db = new DBUtil(dbname);
+	private static final String pt_table = "patent";
+
+	static int success_cnt = 0;
+	static int currentLine = 0;
+	static int fail_cnt = 0;
+
+	public void run() { requestAPI(); }
+
+	public synchronized void requestAPI() {
+		StringBuffer apiUrl = null;
+		StringBuffer cpcUrl = null;
+		StringBuffer RndUrl = null;
+		StringBuffer FamilyUrl = null;
+		
+		String ServiceKey = "1d3Cfz1bwk5Izw5TIB/yJMzCPl0uLAodzfK1SEZkKqY=";
+		String appNum="";
+	
+		int errorcount = 0;
+		for (int count = 0; count < 9999999; count++) {
+			
+			String temp = PT_cnt.substring(Integer.toString(count).length());
+			appNum = "10" + this.year + temp + count;
+			
+			System.out.println(" i : " + this.thread_id + ", 카운트 : " + totalCount);
+
+			apiUrl = new StringBuffer(
+					"http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/getBibliographyDetailInfoSearch");
+			cpcUrl = new StringBuffer("http://plus.kipris.or.kr/openapi/rest/patUtiModInfoSearchSevice/patentCpcInfo");
+			RndUrl = new StringBuffer("http://plus.kipris.or.kr/openapi/rest/patUtiModInfoSearchSevice/patentRndInfo");
+			FamilyUrl = new StringBuffer(
+					"http://plus.kipris.or.kr/openapi/rest/patUtiModInfoSearchSevice/patentFamilyInfo");
+			
+			apiUrl.append("?applicationNumber=" + appNum + "&ServiceKey=" + ServiceKey);
+			cpcUrl.append("?applicationNumber=" + appNum + "&accessKey=" + ServiceKey);
+			RndUrl.append("?applicationNumber=" + appNum + "&accessKey=" + ServiceKey);
+			FamilyUrl.append("?applicationNumber=" + appNum + "&accessKey=" + ServiceKey);
+			
+			System.out.println(appNum);
+
+			try {
+//				if (c_time < 850 && totalCount >= 25) {
+				if(totalCount >= 25) {
+					System.out.println("1초에 50건 초과(sleep)");
+					Thread.sleep(500);
+//					c_time = 0;
+					totalCount = 0;
+				}
+				
+				URL url = new URL(apiUrl.toString());
+				URL cpcurl = new URL(cpcUrl.toString());
+				URL rndurl = new URL(RndUrl.toString());
+				URL familyurl = new URL(FamilyUrl.toString());
+				
+				long start = System.currentTimeMillis();
+				InputStream is = url.openStream();
+				long end = System.currentTimeMillis();
+				System.out.println(year + " : url 저장 " + (end - start) / 1000.0 + "초");
+				c_time += (end - start);
+				System.out.println("총 걸린 시간 : " + c_time / 1000.0 + "초");
+
+				InputStreamReader isr = new InputStreamReader(is, "utf-8");
+				totalCount++;
+				BufferedReader reader = new BufferedReader(isr);
+				StringBuffer buffer = new StringBuffer();
+				String line = null;
+				String tmpStr = null;
+				while ((line = reader.readLine()) != null) {
+					tmpStr = line.toString();
+					tmpStr = tmpStr.replaceAll(" ", "");
+
+					if (!tmpStr.equals(""))
+						buffer.append(line).append("\r\n");
+				}
+				
+				if(!saveToFile(appNum, buffer.toString(), "URL")) {
+					errFile+=appNum + "'s URL|";
+				}
+				
+				
+				InputStream is2 = cpcurl.openStream();
+				totalCount++;
+				InputStreamReader isr2 = new InputStreamReader(is2, "utf-8");
+				BufferedReader reader2 = new BufferedReader(isr2);
+				StringBuffer buffer2 = new StringBuffer();
+				String line2 = null;
+				String tmpStr2 = null;
+				while ((line2 = reader2.readLine()) != null) {
+					tmpStr2 = line2.toString();
+					tmpStr2 = tmpStr2.replaceAll(" ", "");
+					if (!tmpStr2.equals(""))
+						buffer2.append(line2).append("\r\n");
+				}
+				if(!saveToFile(appNum, buffer2.toString(), "CPC")) {
+					errFile+="CPC|";
+				}
+				
+				
+				InputStream is3 = rndurl.openStream();
+				totalCount++;
+				InputStreamReader isr3 = new InputStreamReader(is3, "utf-8");
+				BufferedReader reader3 = new BufferedReader(isr3);
+				StringBuffer buffer3 = new StringBuffer();
+				String line3 = null;
+				String tmpStr3 = null;
+				while ((line3 = reader3.readLine()) != null) {
+					tmpStr3 = line3.toString();
+					tmpStr3 = tmpStr3.replaceAll(" ", "");
+					if (!tmpStr3.equals(""))
+						buffer3.append(line3).append("\r\n");
+				}
+
+				if(!saveToFile(appNum, buffer3.toString(), "RND")) {
+					errFile+="RND|";
+				}
+				
+				InputStream is4 = familyurl.openStream();
+				totalCount++;
+				InputStreamReader isr4 = new InputStreamReader(is4, "utf-8");
+				BufferedReader reader4 = new BufferedReader(isr4);
+				StringBuffer buffer4 = new StringBuffer();
+				String line4 = null;
+				String tmpStr4 = null;
+				while ((line4 = reader4.readLine()) != null) {
+					tmpStr4 = line4.toString();
+					tmpStr4 = tmpStr4.replaceAll(" ", "");
+					if (!tmpStr4.equals(""))
+						buffer4.append(line4).append("\r\n");
+				}
+
+				if(!saveToFile(appNum, buffer4.toString(), "FAMILY")) {
+					errFile+="FAMILY|";
+				}
+				
+				reader.close();
+				reader2.close();
+				reader3.close();
+				reader4.close();
+				
+				if (errFile != null) {
+					File err = new File(errFileName);
+					BufferedWriter err_bw;
+					
+					err_bw =  new BufferedWriter(new FileWriter(err, true));
+					err_bw.write(errFile);
+					err_bw.newLine();				
+					err_bw.flush();
+					err_bw.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				if (e instanceof IOException) {
+					try {
+						System.out.println("Time interval by IOException.");
+						SimpleDateFormat format1 = new SimpleDateFormat("오류 발생 시간 = yyyy-MM-dd HH:mm:ss");
+						
+						Calendar ex_time = Calendar.getInstance();
+						String format_time = format1.format(ex_time.getTime());
+						
+						System.out.println(format_time);
+						Thread.sleep(3000);
+						count--;
+
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				} else if (e instanceof NullPointerException) {
+					System.out.print("NullPointer 처리 : " + appNum + " \t ErrorCnt : \t" + ++errorcount
+							+ " \t ");
+					continue;
+				}
+			}
+		}
+	}
+	
+	public boolean saveToFile(String cnt, String buff, String typeOfURL) {
+		String location = "C:\\AMI\\2019-1학기\\특허수집세미나\\[방중]RestApiService\\0.Data\\";
+		String fileName = location+ cnt +"_" + typeOfURL+".txt";
+		System.out.println("FileName : \t"+fileName);
+		File f_xmlResult = new File(fileName);
+		
+		String size = "";
+		// 파일 사이즈
+		if(f_xmlResult.exists()) {
+			long FileSize = f_xmlResult.length();
+			size = Long.toString(FileSize) + "bytes";
+			System.out.println(size);
+			return true;
+		}
+		else {
+			size = "File is not exist";
+		}
+		
+		BufferedWriter bw;
+		try {  // fileName을 이름으로 파일 쓰기
+			bw = new BufferedWriter(new FileWriter(f_xmlResult, true));
+			bw.write(buff);
+			bw.newLine();				
+			bw.flush();
+			bw.close();
+			return true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static String getCharacterDataFromElement(Element e) {
+		Node child = e.getFirstChild();
+		if (child instanceof CharacterData) {
+			CharacterData cd = (CharacterData) child;
+			return cd.getData();
+		}
+		return "";
+	}
+
+	public static String getChildren(Element element, String tagName) {
+		NodeList list = element.getElementsByTagName(tagName);
+		Element cElement = (Element) list.item(0);
+
+		if (cElement.getFirstChild() != null) {
+			return cElement.getFirstChild().getNodeValue();
+		} else {
+			return "";
+		}
+	}
+}

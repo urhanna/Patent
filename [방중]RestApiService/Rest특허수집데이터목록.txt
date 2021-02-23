@@ -1,0 +1,27 @@
+출원번호 - applicationNumber
+제목 - inventionTitle
+제목(영문) - inventionTitleEng
+출원일자 - applicationDate
+등록번호 - registerNumber
+등록일자 - registerDate
+등록상태 - registerStatus
+출원종류(신규, 국제출원, null) - originalApplicationKind
+청구항수 - claimCount
+발명인 - inventorName
+CPC 코드 리스트 - CooperativepatentclassificationNumber - listCPC
+IPC 코드 리스트 - ipcNumber - listIPC
+공개번호 - openNumber
+공개일자 - openDate
+공고번호 - publicationNumber
+공고일자 - publicationDate
+출원인 - applicantName
+초록 - astrtCont
+청구항 - claim
+국가연구개발사업정보-연구부처명 - ResearchMinistriesandofficesName - listRndMinistriesandoffices
+국가연구개발사업정보-연구사업명 - ResearchProjectName - listRndProject
+국가연구개발사업정보-연구과제명 - ResearchTaskName - listRndTask
+국가연구개발사업정보-주관기관명 - ManagementInstitutionName - listRndInstitution
+패밀리정보-국가코드 - countryCode - listFamilycountryCode
+패밀리정보-국가명 - countryName - listFamilycountryName
+패밀리정보-패밀리종류 - familyKind - listFamilyKind
+패밀리정보-패밀리번호 - familyNumber - listFamilyNumber
