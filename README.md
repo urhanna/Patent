@@ -1,7 +1,7 @@
 # Patent
 
 ## 키프리스 Open API 활용
-[Kipris Link]("http://www.kipris.or.kr/khome/main.jsp", "Kipris link")
+[Link]("http://www.kipris.or.kr/khome/main.jsp", "Kipris link")
 
 ## DB(DDL)
 
